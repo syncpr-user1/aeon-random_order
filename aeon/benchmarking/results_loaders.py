@@ -16,7 +16,7 @@ VALID_TASK_TYPES = ["classification", "clustering", "regression"]
 
 VALID_RESULT_MEASURES = {
     "classification": ["accuracy", "auroc", "balancedaccuracy", "nll"],
-    "clustering": ["ami", "ari", "mi", "nmi", "ri"],
+    "clustering": ["accuracy", "ami", "ari", "mi", "nmi", "ri"],
     "regression": ["mse", "mae", "r2", "mape", "rmse"],
 }
 
@@ -263,7 +263,7 @@ def get_estimator_results_as_array(
     datasets=UCR,
     default_only=True,
     task="Classification",
-    type="accuracy",
+    measure="accuracy",
     include_missing=False,
     path="https://timeseriesclassification.com/results/ReferenceResults",
 ):
@@ -308,7 +308,7 @@ def get_estimator_results_as_array(
         datasets=datasets,
         default_only=default_only,
         task=task,
-        type=type,
+        measure=measure,
         path=path,
     )
 
