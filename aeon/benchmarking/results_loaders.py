@@ -12,49 +12,32 @@ import pandas as pd
 
 from aeon.datasets.tsc_data_lists import univariate as UCR
 
+VALID_RESULT_TYPES = ["accuracy", "auroc", "balancedaccuracy", "nll"]
 VALID_TASK_TYPES = ["classification", "clustering", "regression"]
-
-VALID_RESULT_MEASURES = {
-    "classification": ["accuracy", "auroc", "balancedaccuracy", "nll"],
-    "clustering": ["accuracy", "ami", "ari", "mi", "nmi", "ri"],
-    "regression": ["mse", "mae", "r2", "mape", "rmse"],
-}
 
 NAME_ALIASES = {
     "Arsenal": {"ARSENAL", "TheArsenal", "AFC", "ArsenalClassifier"},
     "BOSS": {"TheBOSS", "boss", "BOSSClassifier"},
     "cBOSS": {"CBOSS", "CBOSSClassifier", "cboss"},
     "CIF": {"CanonicalIntervalForest", "CIFClassifier"},
-    "CNN": {"cnn", "CNNClassifier", "CNNRegressor"},
+    "CNN": {"cnn", "CNNClassifier"},
     "Catch22": {"catch22", "Catch22Classifier"},
-    "DrCIF": {"DrCIF", "DrCIFClassifier", "DrCIFRegressor"},
-    "FreshPRINCE": {
-        "FP",
-        "freshPrince",
-        "FreshPrince",
-        "FreshPRINCEClassifier",
-        "FreshPRINCERegressor",
-    },
+    "DrCIF": {"DrCIF", "DrCIFClassifier"},
+    "FreshPRINCE": {"FP", "freshPrince", "FreshPrince", "FreshPRINCEClassifier"},
     "HC1": {"HIVECOTE1", "HIVECOTEV1", "hc", "HIVE-COTEv1"},
     "HC2": {"HIVECOTE2", "HIVECOTEV2", "hc2", "HIVE-COTE", "HIVE-COTEv2"},
     "Hydra-MultiROCKET": {"Hydra-MR", "MultiROCKET-Hydra", "MR-Hydra", "HydraMR"},
-    "InceptionTime": {
-        "IT",
-        "InceptionT",
-        "inceptiontime",
-        "InceptionTimeClassifier",
-        "InceptionTimeRegressor",
-    },
+    "InceptionTime": {"IT", "InceptionT", "inceptiontime", "InceptionTimeClassifier"},
     "MiniROCKET": {"MiniRocket", "MiniROCKETClassifier"},
     "MrSQM": {"mrsqm", "MrSQMClassifier"},
-    "MultiROCKET": {"MultiRocket", "MultiROCKETClassifier", "MultiROCKETRegressor"},
+    "MultiROCKET": {"MultiRocket", "MultiROCKETClassifier"},
     "ProximityForest": {"PF", "ProximityForestV1", "PFV1"},
     "RDST": {"rdst", "RandomDilationShapeletTransform", "RDSTClassifier"},
     "RISE": {"RISEClassifier", "rise"},
-    "ROCKET": {"Rocket", "RocketClassifier", "ROCKETClassifier", "ROCKETRegressor"},
+    "ROCKET": {"Rocket", "RocketClassifier", "ROCKETClassifier"},
     "RSF": {"rsf", "RSFClassifier"},
     "RSTSF": {"R_RSTF", "RandomSTF", "RSTFClassifier"},
-    "ResNet": {"resnet", "ResNetClassifier", "ResNetRegressor"},
+    "ResNet": {"R_RSTF", "RandomSTF", "RSTFClassifier"},
     "STC": {"ShapeletTransform", "STCClassifier", "RandomShapeletTransformClassifier"},
     "STSF": {"stsf", "STSFClassifier"},
     "Signatures": {"SignaturesClassifier"},
@@ -63,7 +46,6 @@ NAME_ALIASES = {
     "TSF": {"tsf", "TimeSeriesForest"},
     "TSFresh": {"tsfresh", "TSFreshClassifier"},
     "WEASEL-Dilation": {"WEASEL", "WEASEL-D", "Weasel-D", "WEASEL2"},
-    # Clustering
     "kmeans-ed": {"ed-kmeans", "kmeans-euclidean", "k-means-ed", "KMeans-ED"},
     "kmeans-dtw": {"dtw-kmeans", "k-means-dtw", "KMeans-DTW"},
     "kmeans-msm": {"msm-kmeans", "k-means-msm", "KMeans-MSM"},
@@ -72,16 +54,6 @@ NAME_ALIASES = {
     "kmedoids-dtw": {"dtw-kmedoids", "k-medoids-dtw", "KMedoids-DTW"},
     "kmedoids-msm": {"msm-kmedoids", "k-medoids-msm", "KMedoids-MSM"},
     "kmedoids-twe": {"twe-kmedoids", "k-medoids-twe", "KMedoids-TWE"},
-    # Regression only
-    "FCN": {"fcn", "FCNRegressor"},
-    "FPCR": {"fpcr", "FPCRRegressor"},
-    "FPCR-b-spline": {"fpcr-b-spline", "FPCRBSplineRegressor"},
-    "GridSVR": {"gridSVR", "GridSVRRegressor"},
-    "RandF": {"randf", "RandFRegressor"},
-    "RotF": {"rotf", "RotFRegressor"},
-    "Ridge": {"ridge", "RidgeRegressor"},
-    "SingleInceptionTime": {"SIT", "SingleInceptionT", "SingleInceptionTimeRegressor"},
-    "XGBoost": {"xgboost", "XGBoostRegressor"},
 }
 
 
@@ -150,43 +122,14 @@ def get_available_estimators(task="classification") -> pd.DataFrame:
     return data
 
 
-# temporary function due to legacy format
-def _load_results(
-    estimators, datasets, default_only, path, suffix, probs_names, task, measure
-):
-    path = f"{path}/{task}/{measure}/"
-    all_results = {}
-    for cls in estimators:
-        alias_cls = estimator_alias(cls)
-        url = path + alias_cls + suffix
-        try:
-            data = pd.read_csv(url)
-        except Exception:
-            raise ValueError(
-                f"Cannot connect to {url} website down or results not " f"present"
-            )
-        cls_results = {}
-        problems = data[probs_names]
-        results = data.iloc[:, 1:].to_numpy()
-        p = list(problems)
-        for problem in datasets:
-            if problem in p:
-                pos = p.index(problem)
-                if default_only:
-                    cls_results[problem] = results[pos][0]
-                else:
-                    cls_results[problem] = results[pos]
-        all_results[cls] = cls_results
-    return all_results
-
-
 def get_estimator_results(
     estimators: list,
     datasets=UCR,
     default_only=True,
     task="classification",
-    measure="accuracy",
+    type="accuracy",
     path="https://timeseriesclassification.com/results/ReferenceResults",
+    suffix="_TESTFOLDS.csv",
 ):
     """Look for results for given estimators for a list of datasets.
 
@@ -202,10 +145,6 @@ def get_estimator_results(
         datasets listed in aeon.datasets.tsc_data_lists.
     default_only : boolean, default = True
         Whether to recover just the default test results, or 30 resamples.
-    task : str, default="classification"
-        Should be one of VALID_TASK_TYPES.
-    measure : str, default = "accuracy"
-        Should be one of VALID_RESULT_MEASURES[task].
     path : str, default="https://timeseriesclassification.com/results/ReferenceResults/"
         Path where to read results from, default to tsc.com
     suffix : str, default="_TESTFOLDS.csv"
@@ -227,35 +166,39 @@ def get_estimator_results(
     {'HC2': {'Chinatown': 0.9825072886297376, 'Adiac': 0.8107416879795396}}
     """
     task = task.lower()
-    measure = measure.lower()
+    type = type.lower()
+    if type not in VALID_RESULT_TYPES:
+        raise ValueError(
+            f"Error in get_estimator_results, {type} is not a valid type of " f"results"
+        )
+
     if task not in VALID_TASK_TYPES:
         raise ValueError(f"Error in get_estimator_results, {task} is not a valid task")
-    if measure not in VALID_RESULT_MEASURES[task]:
-        raise ValueError(
-            f"Error in get_estimator_results, {measure} is not a valid type of "
-            f"results"
-        )
-    # Temporarily split until format standardisation on tsc.com
-    if task == "classification":
-        suffix = "_TESTFOLDS.csv"
-        probs_names = "folds:"
-    elif task == "regression":
-        suffix = "_" + measure + ".csv"
-        probs_names = "Resamples:"
-    else:  # task == "clustering":
-        suffix = "_TESTFOLDS.csv"
-        probs_names = "folds:"
 
-    return _load_results(
-        estimators=estimators,
-        datasets=datasets,
-        default_only=default_only,
-        path=path,
-        suffix=suffix,
-        probs_names=probs_names,
-        task=task,
-        measure=measure,
-    )
+    path = f"{path}/{task}/{type}/"
+    all_results = {}
+    for cls in estimators:
+        alias_cls = estimator_alias(cls)
+        url = path + alias_cls + suffix
+        try:
+            data = pd.read_csv(url)
+        except Exception:
+            raise ValueError(
+                f"Cannot connect to {url} website down or results not " f"present"
+            )
+        cls_results = {}
+        problems = data["folds:"]
+        results = data.iloc[:, 1:].to_numpy()
+        p = list(problems)
+        for problem in datasets:
+            if problem in p:
+                pos = p.index(problem)
+                if default_only:
+                    cls_results[problem] = results[pos][0]
+                else:
+                    cls_results[problem] = results[pos]
+        all_results[cls] = cls_results
+    return all_results
 
 
 def get_estimator_results_as_array(
@@ -263,7 +206,7 @@ def get_estimator_results_as_array(
     datasets=UCR,
     default_only=True,
     task="Classification",
-    measure="accuracy",
+    type="accuracy",
     include_missing=False,
     path="https://timeseriesclassification.com/results/ReferenceResults",
 ):
@@ -308,7 +251,7 @@ def get_estimator_results_as_array(
         datasets=datasets,
         default_only=default_only,
         task=task,
-        measure=measure,
+        type=type,
         path=path,
     )
 
@@ -482,7 +425,7 @@ def get_bake_off_2017_results(default_only=True):
     Examples
     --------
     >>> from aeon.benchmarking import get_bake_off_2017_results, uni_classifiers_2017
-    >>> from aeon.visualisation import plot_critical_difference
+    >>> from aeon.benchmarking import plot_critical_difference
     >>> default_results = get_bake_off_2017_results(default_only=True) # doctest: +SKIP
     >>> classifiers = ["MSM_1NN","LPS","TSBF","TSF","DTW_F","EE","BOSS","ST","FlatCOTE"]
     >>> # Get column positions of classifiers in results
@@ -534,7 +477,7 @@ def get_bake_off_2021_results(default_only=True):
     Examples
     --------
     >>> from aeon.benchmarking import get_bake_off_2021_results, multi_classifiers_2021
-    >>> from aeon.visualisation import plot_critical_difference
+    >>> from aeon.benchmarking import plot_critical_difference
     >>> default_results = get_bake_off_2021_results(default_only=True) # doctest: +SKIP
     >>> cls = list(multi_classifiers_2021.keys()) # doctest: +SKIP
     >>> selected =default_results # doctest: +SKIP
@@ -585,7 +528,7 @@ def get_bake_off_2023_results(default_only=True):
     Examples
     --------
     >>> from aeon.benchmarking import get_bake_off_2023_results, uni_classifiers_2023
-    >>> from aeon.visualisation import plot_critical_difference
+    >>> from aeon.benchmarking import plot_critical_difference
     >>> default_results = get_bake_off_2023_results(default_only=True) # doctest: +SKIP
     >>> classifiers = ["HC2","MR-Hydra","InceptionT", "FreshPRINCE","WEASEL-D","RDST"]
     >>> # Get column positions of classifiers in results

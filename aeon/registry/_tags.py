@@ -119,10 +119,9 @@ ESTIMATOR_TAG_REGISTER = [
             [
                 "pd.Series",
                 "pd.DataFrame",
-                "np.ndarray",
+                "np.array",
                 "nested_univ",
                 "pd-multiindex",
-                "pd_multiindex_hier",
                 "numpy3D",
                 "df-list",
             ],
@@ -131,13 +130,13 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "X_inner_type",
-        ["forecaster", "classifier", "regressor", "transformer", "clusterer"],
+        ["forecaster"],
         (
             "list",
             [
                 "pd.Series",
                 "pd.DataFrame",
-                "np.ndarray",
+                "np.array",
                 "nested_univ",
                 "pd-multiindex",
                 "numpy3D",
