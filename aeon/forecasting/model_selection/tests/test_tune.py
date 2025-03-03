@@ -20,10 +20,10 @@ from aeon.forecasting.naive import NaiveForecaster
 from aeon.forecasting.tests import TEST_N_ITERS, TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from aeon.forecasting.trend import PolynomialTrendForecaster
 from aeon.performance_metrics.forecasting import (
-    mean_absolute_percentage_error,
-    mean_squared_error,
+    MeanAbsolutePercentageError,
+    MeanSquaredError,
 )
-from aeon.tests.test_all_estimators import PR_TESTING
+from aeon.testing.test_config import PR_TESTING
 from aeon.transformations.detrend import Detrender
 from aeon.utils._testing.hierarchical import _make_hierarchical
 
@@ -41,11 +41,11 @@ PIPE_GRID = {
 }
 
 if PR_TESTING:
-    TEST_METRICS = [mean_absolute_percentage_error]
+    TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True)]
     ERROR_SCORES = [1000]
     GRID = [(NAIVE, NAIVE_GRID)]
 else:
-    TEST_METRICS = [mean_absolute_percentage_error, mean_squared_error]
+    TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
     ERROR_SCORES = [np.nan, "raise", 1000]
     GRID = [(NAIVE, NAIVE_GRID), (PIPE, PIPE_GRID)]
 
@@ -61,12 +61,12 @@ def _get_expected_scores(forecaster, cv, param_grid, y, X, scoring):
         f = forecaster.clone()
         f.set_params(**params)
         out = evaluate(f, cv, y, X=X, scoring=scoring)
-        scores[i] = out.loc[:, f"test_{scoring.__name__}"].mean()
+        scores[i] = out.loc[:, f"test_{scoring.name}"].mean()
     return scores
 
 
 def _check_cv(forecaster, tuner, cv, param_grid, y, X, scoring):
-    actual = tuner.cv_results_[f"mean_test_{scoring.__name__}"]
+    actual = tuner.cv_results_[f"mean_test_{scoring.name}"]
 
     expected = _get_expected_scores(forecaster, cv, param_grid, y, X, scoring)
     np.testing.assert_array_equal(actual, expected)
