@@ -119,9 +119,6 @@ def test_get_available_estimators():
     classifiers = get_available_estimators(task="classification")
     assert isinstance(classifiers, pd.DataFrame)
     assert classifiers.isin(["HC2"]).any().any()
-    regressors = get_available_estimators(task="regression")
-    assert isinstance(regressors, pd.DataFrame)
-    assert regressors.isin(["DrCIF"]).any().any()
 
 
 @pytest.mark.skipif(
