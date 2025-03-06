@@ -11,6 +11,7 @@ Benchmarking
     :toctree: auto_generated/
     :template: function.rst
 
+    plot_critical_difference
     get_available_estimators
     get_estimator_results
     get_estimator_results_as_array

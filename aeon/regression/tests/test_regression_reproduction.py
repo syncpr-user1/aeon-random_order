@@ -1,5 +1,3 @@
-"""Functions for generating stored unit test results for regressors."""
-
 import numpy as np
 from sklearn.utils._testing import set_random_state
 
