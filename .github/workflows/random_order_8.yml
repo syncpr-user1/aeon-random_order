@@ -1,0 +1,87 @@
+name: random_order_8
+
+on:
+  push:
+  workflow_dispatch:
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+#   # cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-24.04 ] #, macOS-14, windows-2022 ]
+        python-version: [ "3.10" ] #[ "3.9", "3.10", "3.11", "3.12" ]
+        # skip python versions unless the PR has the 'full pytest actions' label
+        pr-testing:
+          - ${{ (github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full pytest actions')) }}
+        exclude:
+          - pr-testing: true
+            # python-version: "3.10"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set swap space
+        if: runner.os == 'Linux'
+        uses: pierotofy/set-swap-space@v1.0
+        with:
+          swap-size-gb: 10
+
+      - if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'no numba cache') }}
+        name: Restore numba cache
+        uses: ./.github/actions/numba_cache
+        with:
+          cache_name: "pytest"
+          runner_os: ${{ runner.os }}
+          python_version: ${{ matrix.python-version }}
+
+      - uses: ./.github/actions/cpu_all_extras
+        with:
+          additional_extras: "dev"
+
+      - name: Install pytest-ranking related
+        run: |
+          python -m pip uninstall -y pytest-randomly pytest-xdist
+          python -m pip install pytest-ranking pytest-json-report pytest-xdist
+      
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Restore pytest-ranking cache
+        id: restore-pytest-ranking-cache
+        if: always()
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
+          key: pytest-ranking-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.python }}
+      
+      - name: Run tests
+        # run the full test suit if a PR has the 'full pytest actions' label
+        run: python -m pytest -p no:randomly -n logical --prtesting ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full pytest actions') }} -v --durations=0 --json-report --json-report-file=./test-report.json --rank --rank-weight=0-0-0 --rank-level=method --rank-seed=${{ github.run_id }} --ignore-glob='*test_all_estimators.py'
+
+      - name: Save pytest-ranking cache
+        id: save-pytest-ranking-cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
+          key: pytest-ranking-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.python }}-${{ github.run_id }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+            name: pytest-ranking upload test report json
+            path: |
+              ./test-report.json

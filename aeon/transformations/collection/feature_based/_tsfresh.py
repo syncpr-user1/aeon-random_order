@@ -536,7 +536,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
 
         Parameters
         ----------
-        X : Series or Panel, any supported type
+        X : Series or Panel, any supported mtype
             Data to be transformed, of python type as follows:
                 Series: pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
                 Panel: pd.DataFrame with 2-level MultiIndex, list of pd.DataFrame,

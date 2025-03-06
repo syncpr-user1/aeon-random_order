@@ -130,9 +130,9 @@ class RocketClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : 3D np.ndarray
+        X : 3D np.array
             The training data of shape = (n_instances, n_channels, n_timepoints).
-        y : 3D np.ndarray
+        y : 3D np.array
             The class labels shape = (n_instances,).
 
         Returns
@@ -207,7 +207,7 @@ class RocketClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : 3D np.ndarray of shape = [n_instances, n_channels, series_length]
+        X : 3D np.array of shape = [n_instances, n_channels, series_length]
             The data to make predictions for.
 
         Returns
@@ -222,7 +222,7 @@ class RocketClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : 3D np.ndarray of shape = [n_instances, n_channels, series_length]
+        X : 3D np.array of shape = [n_instances, n_channels, series_length]
             The data to make predict probabilities for.
 
         Returns

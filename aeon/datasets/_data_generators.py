@@ -229,7 +229,7 @@ def _convert_tsf_to_hierarchical(
     Returns
     -------
     pd.DataFrame
-        hierarchical multiindex pd.Dataframe
+        aeon pd_multiindex_hier mtype
     """
     df = data.copy()
 

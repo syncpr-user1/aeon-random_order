@@ -28,7 +28,7 @@ from aeon.datasets._data_loaders import (
     _load_header_info,
     _load_saved_dataset,
 )
-from aeon.testing.test_config import PR_TESTING
+from aeon.tests.test_config import PR_TESTING
 
 
 @pytest.mark.skipif(
@@ -91,8 +91,6 @@ def test_load_regression_from_repo():
     ):
         load_regression(name)
     name = "FloodModeling1"
-    name2 = "ParkingBirmingham"
-    name3 = "AcousticContaminationMadrid"
     with tempfile.TemporaryDirectory() as tmp:
         X, y, meta = load_regression(name, extract_path=tmp, return_metadata=True)
         assert isinstance(X, np.ndarray)
@@ -104,28 +102,9 @@ def test_load_regression_from_repo():
         assert not meta["timestamps"]
         assert meta["univariate"]
         assert meta["equallength"]
-        assert not meta["missing"]
         assert not meta["classlabel"]
         assert meta["targetlabel"]
         assert meta["class_values"] == []
-        # Test load equal length
-        X, y, meta = load_regression(
-            name2, extract_path=tmp, return_metadata=True, load_equal_length=True
-        )
-        assert meta["equallength"]
-        X, y, meta = load_regression(
-            name2, extract_path=tmp, return_metadata=True, load_equal_length=False
-        )
-        assert not meta["equallength"]
-        # Test load no missing values
-        X, y, meta = load_regression(
-            name3, extract_path=tmp, return_metadata=True, load_no_missing=True
-        )
-        assert not meta["missing"]
-        X, y, meta = load_regression(
-            name3, extract_path=tmp, return_metadata=True, load_no_missing=False
-        )
-        assert meta["missing"]
 
 
 @pytest.mark.skipif(
@@ -301,6 +280,7 @@ def test_load_provided_dataset(return_X_y, return_type):
         assert isinstance(X, np.ndarray) and X.ndim == 3
     elif return_type == "numpy2D":
         assert isinstance(X, np.ndarray) and X.ndim == 2
+    # Check whether object is same mtype or not, via bool
 
 
 @pytest.mark.skipif(

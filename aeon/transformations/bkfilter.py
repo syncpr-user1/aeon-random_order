@@ -66,19 +66,25 @@ class BKFilter(BaseTransformer):
 
     _tags = {
         "input_data_type": "Series",
-        # what is the abstract type of X: Series, or Panel
+        # what is the scitype of X: Series, or Panel
         "output_data_type": "Series",
-        # what abstract type is returned: Primitives, Series, Panel
-        "instancewise": True,
-        "univariate-only": False,
-        "X_inner_type": "np.ndarray",
-        "y_inner_type": "None",
-        "enforce_index_type": [pd.RangeIndex],
-        "fit_is_empty": True,
+        # what scitype is returned: Primitives, Series, Panel
+        "instancewise": True,  # is this an instance-wise transform?
+        "univariate-only": False,  # can the transformer handle multivariate X?
+        "X_inner_type": "np.ndarray",  # which mtypes do _fit/_predict support for X?
+        # this can be a Panel mtype even if transform-input is Series, vectorized
+        "y_inner_type": "None",  # which mtypes do _fit/_predict support for y?
+        "requires_y": False,  # does y need to be passed in fit?
+        "enforce_index_type": [
+            pd.RangeIndex
+        ],  # index type that needs to be enforced in X/y
+        "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "transform-returns-same-time-index": False,
+        # does transform return have the same time index as input X
         "capability:unequal_length": True,
-        "capability:missing_values": False,
-        "remember_data": False,
+        # can the transformer handle unequal length time series (if passed Panel)?
+        "capability:missing_values": False,  # can estimator handle missing data?
+        "remember_data": False,  # whether all data seen is remembered as self._X
         "python_dependencies": "statsmodels",
     }
 

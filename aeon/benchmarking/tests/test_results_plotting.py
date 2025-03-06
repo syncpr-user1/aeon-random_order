@@ -4,20 +4,17 @@ import os
 import numpy as np
 import pytest
 
-import aeon
 from aeon.benchmarking.results_loaders import get_estimator_results_as_array
-from aeon.datasets.tsc_data_lists import univariate_equal_length
-from aeon.utils.validation._dependencies import _check_soft_dependencies
-from aeon.visualisation.results_plotting import (
+from aeon.benchmarking.results_plotting import (
     plot_boxplot_median,
     plot_scatter,
     plot_scatter_predictions,
 )
+from aeon.datasets.tsc_data_lists import univariate_equal_length
+from aeon.utils.validation._dependencies import _check_soft_dependencies
 
-data_path = os.path.join(
-    os.path.dirname(aeon.__file__),
-    "benchmarking/example_results/",
-)
+test_path = MODULE = os.path.dirname(__file__)
+data_path = os.path.join(test_path, "../example_results/")
 
 
 @pytest.mark.skipif(
