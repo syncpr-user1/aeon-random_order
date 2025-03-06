@@ -5,11 +5,8 @@ import numpy.random
 import pandas as pd
 import pytest
 
-from aeon.testing.mock_estimators import (
-    MockClassifier,
-    MockClassifierFullTags,
-    MockClassifierPredictProba,
-)
+from aeon.classification import DummyClassifier
+from aeon.classification.base import BaseClassifier
 from aeon.utils.validation.collection import COLLECTIONS_DATA_TYPES
 from aeon.utils.validation.tests.test_collection import (
     EQUAL_LENGTH_UNIVARIATE,
@@ -17,6 +14,41 @@ from aeon.utils.validation.tests.test_collection import (
 )
 
 __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst", "achieveordie"]
+
+
+class _TestClassifier(BaseClassifier):
+    """Classifier for testing base class fit/predict/predict_proba."""
+
+    def _fit(self, X, y):
+        """Fit dummy."""
+        return self
+
+    def _predict(self, X):
+        """Predict dummy."""
+        return np.zeros(shape=(len(X),))
+
+
+class _TestHandlesAllInput(BaseClassifier):
+    """Dummy classifier for testing base class fit/predict/predict_proba."""
+
+    _tags = {
+        "capability:multivariate": True,
+        "capability:unequal_length": True,
+        "capability:missing_values": True,
+        "X_inner_type": ["np-list", "numpy3D"],
+    }
+
+    def _fit(self, X, y):
+        """Fit dummy."""
+        return self
+
+    def _predict(self, X):
+        """Predict dummy."""
+        return np.zeros(shape=(len(X),))
+
+    def _predict_proba(self, X):
+        """Predict proba dummy."""
+        return np.zeros(shape=(len(X), 2))
 
 
 multivariate_message = r"multivariate series"
@@ -52,7 +84,7 @@ def test_incorrect_input():
 
     Errors are raise in aeon/utils/validation/collection.py and tested again here.
     """
-    dummy = MockClassifier()
+    dummy = _TestClassifier()
     correctX = np.random.random(size=(5, 1, 10))
     correcty = np.array([0, 0, 1, 1, 1])
     X = ["list", "of", "string", "invalid"]
@@ -88,10 +120,22 @@ def test_incorrect_input():
         dummy.fit(X, y)
 
 
+class _MutableClassifier(BaseClassifier):
+    """Classifier for testing with different internal_types."""
+
+    def _fit(self, X, y):
+        """Fit dummy."""
+        return self
+
+    def _predict(self, X):
+        """Predict dummy."""
+        return np.zeros(shape=(len(X),))
+
+
 def test__check_y():
     """Test private method _check_y."""
     # Correct outcomes
-    cls = MockClassifier()
+    cls = _TestClassifier()
     y = np.random.randint(0, 4, 100, dtype=int)
     cls._check_y(y, 100)
     assert len(cls.classes_) == cls.n_classes_ == len(cls._class_dictionary) == 4
@@ -119,23 +163,23 @@ def test_unequal_length_input(data):
     """Test with unequal length failures and passes."""
     y = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
     if data in UNEQUAL_LENGTH_UNIVARIATE.keys():
-        dummy = MockClassifier()
+        dummy = _TestClassifier()
         X = UNEQUAL_LENGTH_UNIVARIATE[data]
         y = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
         with pytest.raises(ValueError, match=r"cannot handle unequal length series"):
             dummy.fit(X, y)
-        dummy = MockClassifierFullTags()
+        dummy = _TestHandlesAllInput()
         _assert_fit_predict(dummy, X, y)
 
 
 @pytest.mark.parametrize("data", COLLECTIONS_DATA_TYPES)
 def test_equal_length_input(data):
     """Test with unequal length failures and passes."""
-    dummy = MockClassifier()
+    dummy = _TestClassifier()
     X = EQUAL_LENGTH_UNIVARIATE[data]
     y = np.array([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
     _assert_fit_predict(dummy, X, y)
-    dummy = MockClassifierFullTags()
+    dummy = _TestHandlesAllInput()
     _assert_fit_predict(dummy, X, y)
 
 
@@ -143,7 +187,7 @@ def test_classifier_score():
     """Test the base class score() function."""
     X = np.random.random(size=(6, 10))
     y = np.array([0, 0, 0, 1, 1, 1])
-    dummy = MockClassifier()
+    dummy = DummyClassifier()
     dummy.fit(X, y)
     assert dummy.score(X, y) == 0.5
     y2 = pd.Series([0, 0, 0, 1, 1, 1])
@@ -157,7 +201,7 @@ def test_predict_single_class():
     trainX = np.ones(shape=(10, 20))
     y = np.ones(10)
     testX = np.ones(shape=(10, 20))
-    clf = MockClassifierPredictProba()
+    clf = DummyClassifier()
     clf.fit(trainX, y)
     y_pred = clf.predict(testX)
     y_pred_proba = clf.predict_proba(testX)
@@ -171,7 +215,7 @@ def test_predict_single_class():
 
 def test__predict_proba():
     """Test default _predict_proba."""
-    cls = MockClassifier()
+    cls = _TestClassifier()
     X = np.random.random(size=(5, 1, 10))
     y = np.array([1, 0, 1, 0, 1])
     with pytest.raises(KeyError):
